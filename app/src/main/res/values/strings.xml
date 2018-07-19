@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">ProjectServer007</string>
+
+    <string name="connectToClients">Connect to Clients</string>
+    <string name="disconnectToClients">Disconnect to Clients</string>
+
+    <string name="connectToCameras">Connect to Cameras</string>
+    <string name="disconnectToCameras">Disconnect to Cameras</string>
+
+    <string name="numberOfClients">Client/s are Connected</string>
+    <string name="about">about...</string>
+</resources>
