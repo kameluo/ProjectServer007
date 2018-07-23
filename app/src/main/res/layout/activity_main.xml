@@ -64,14 +64,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
         </LinearLayout>
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/buttonAbout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="bottom"
-            android:text="@string/about" />
+            android:text="@string/about"
+            android:onClick="about"/>
     </LinearLayout>
 </ScrollView>
