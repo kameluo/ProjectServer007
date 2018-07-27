@@ -1,8 +1,15 @@
 package com.example.android.projectserver007;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.Formatter;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -10,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import android.widget.VideoView;
 
 public class MainActivity extends AppCompatActivity {
     static TextView textViewNumberOfClients;
@@ -22,11 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
     Dialog dialog;
     Button buttonAbout;
-
-
-
-
     MulticastthreadRun multicastthreadRun=new MulticastthreadRun();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,23 +48,12 @@ public class MainActivity extends AppCompatActivity {
         toggleButtonCamera.setVisibility(View.VISIBLE);
         toggleButtonClients = (ToggleButton) findViewById(R.id.toggleButtonClients);
 
-
-
-
         buttonAbout=(Button) findViewById(R.id.buttonAbout);
 
         dialog=new Dialog(this);
-    }
 
-    public static void setSoundState(int clientip, String value) {
-        textViewNumberOfClients.post(new Runnable() {
-            @Override
-            public void run() {
-
-
-            }
-        });
-
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
     }
 
@@ -70,42 +64,39 @@ public class MainActivity extends AppCompatActivity {
             textViewNumberOfClients.setText(multicastthreadRun.ClientIpArrayList.size() +" Client/s Connected");
             textViewNumberOfClients.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.GONE);
-
-
-
             linearLayoutSecondaryTexts.setVisibility(View.VISIBLE);
 
+            Intent i=new Intent(this,ClientConnectService.class);
+            startService(i);
 
+
+            //new connectClients().execute();
+
+            //Multithread here
+            //multicastthreadRun.run();
 
                 //soundstates here
                 //linearLayoutSecondaryTexts.addView(new TextView(this));
-                Thread t = new Thread(new Runnable() {
+            /*  /Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
 
                         //Multithread here
                         multicastthreadRun.run();
-
-
                         for(int counter=0;counter<multicastthreadRun.ClientIpArrayList.size();counter++) {
-
-                            TextView textView=new TextView(MainActivity.this);
-                            linearLayoutSecondaryTexts.addView(textView);
-
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 //in this case we can change the user interface
-
-
-
+                                TextView textView=new TextView(MainActivity.this);
+                                linearLayoutSecondaryTexts.addView(textView);
+                                textView.setText("hello");
                             }
                         });
-
                         }//end of the for loop
                     }
                 });t.start();
-
+                */
             toggleButtonCamera.setVisibility(View.VISIBLE);
         } else {
 
@@ -116,11 +107,27 @@ public class MainActivity extends AppCompatActivity {
             linearLayoutSecondaryTexts.setVisibility(View.GONE);
         }
     }
+    public class connectClients extends AsyncTask<Void, Void, Void> {
+        @Override
+        public Void doInBackground(Void... voids) {
+            //Multithread here
+            multicastthreadRun.run();
+            return null;
+        }
+        @Override
+        public void onPreExecute(){
+            Toast.makeText(getApplicationContext(), "Starting Multicast", Toast.LENGTH_SHORT).show();
+        }
+
+        public void onPostExecute(){
+            Toast.makeText(getApplicationContext(), "After Multicast", Toast.LENGTH_SHORT).show();
+        }
+    }
 
 
 
 
-    /*
+
     public void toggleButtonConnectCamerasFunction(View view) {
         boolean checked = ((ToggleButton) view).isChecked();
         VideoView videoView = new VideoView(this, null);
@@ -143,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
             linearLayoutSecondaryVideoView.setVisibility(View.GONE);
             toggleButtonClients.setEnabled(true);
         }
-    }*/
+    }
 
     public void about(View v){
         dialog.setContentView(R.layout.about);
