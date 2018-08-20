@@ -8,6 +8,7 @@ import android.widget.Toast;
 public class ClientConnectService extends IntentService{
 
     MulticastthreadRun multicastthreadRun=new MulticastthreadRun();
+    BroadCastServer broadCastServer=new BroadCastServer();
     public ClientConnectService() {
         super("My Service");
     }
@@ -17,12 +18,14 @@ public class ClientConnectService extends IntentService{
     public void onCreate() {
         super.onCreate();
         Toast.makeText(getApplicationContext(), "Service Created", Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_SHORT).show();
-        multicastthreadRun.run();
+        //multicastthreadRun.run();
+        broadCastServer.run();
         return super.onStartCommand(intent, flags, startId);
     }
 

@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.format.Formatter;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -19,13 +21,16 @@ import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.AccessController;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 
 import static android.app.PendingIntent.getActivity;
 import static android.content.Context.WIFI_SERVICE;
+import static java.security.AccessController.getContext;
 
 class MulticastthreadRun implements Runnable,serverInterface{
     public static final int SERVICE_UNICAST_PORT = 20002;
@@ -43,9 +48,8 @@ class MulticastthreadRun implements Runnable,serverInterface{
     @Override
     public void run() {
         InetAddress ipLocal=null;
-
+        StringBuilder IFCONFIG=null;
         //Socket to sending
-
         try {
             //ipLocal = InetAddress.getLocalHost();
             //InetSocketAddress is = new InetSocketAddress(ipLocal.getHostAddress(), 60000);// the IP of this
@@ -68,9 +72,27 @@ class MulticastthreadRun implements Runnable,serverInterface{
             InetAddress group = InetAddress.getByName("225.4.5.6");// The MultiCast Group
             InetSocketAddress mg = new InetSocketAddress(group, SERVICE_MULTICAST_PORT);
             // TODO Enter the IP of this PC in the next line
-            ipLocal = InetAddress.getLocalHost();
 
-            InetSocketAddress is = new InetSocketAddress(ipLocal.getHostAddress(), SERVICE_MULTICAST_PORT);// the IP of this machine
+           // ipLocal = InetAddress.getLocalHost();
+
+            //getting the LocalIP
+           IFCONFIG=new StringBuilder();
+            try {
+                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                    NetworkInterface intf = en.nextElement();
+                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                        InetAddress inetAddress = enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+                            IFCONFIG.append(inetAddress.getHostAddress().toString());
+                        }
+                    }
+                }
+            } catch (SocketException ex) {
+               // Log.e("LOG_TAG", ex.toString());
+            }
+
+
+            InetSocketAddress is = new InetSocketAddress(IFCONFIG.toString(), SERVICE_MULTICAST_PORT);// the IP of this machine
             multicastSocket = new MulticastSocket(is);
             NetworkInterface nis = NetworkInterface.getByInetAddress(is.getAddress());
             multicastSocket.joinGroup(mg, nis);// subscribing the multicast IP address to that socket,listening to the
@@ -95,6 +117,8 @@ class MulticastthreadRun implements Runnable,serverInterface{
                 multicastSocket.receive(datagramPacketMulticast);
                 String multiMessage=new String(bMulti);
                 System.out.println(multiMessage);
+               // Log.i("redirect from syste", multiMessage);
+                Log.d("myTag", multiMessage);
 
                 InetAddress clientIP=datagramPacketMulticast.getAddress();
                 int clientPort=datagramPacketMulticast.getPort();
@@ -106,7 +130,7 @@ class MulticastthreadRun implements Runnable,serverInterface{
                 String clientIPString=clientIP.getHostAddress();//converting the IP from Bytes format to String format to access the client IPs Array list
                 String clientPortString=String.valueOf(clientPort);//converting the Port from integer format to String format to access the client IPs Array list
                 //TODO Enter the IP of this PC in the next line
-                SocketAddress socket = new InetSocketAddress(ipLocal.getHostAddress(),20002);//creating a socket but for unicast
+                SocketAddress socket = new InetSocketAddress(InetAddress.getByName(IFCONFIG.toString()),20002);//creating a socket but for unicast
                 System.out.println(multiMessage.equals("CRQ"));
                 setsocket(socket);
                 //the end of the broadcast
@@ -149,10 +173,13 @@ class MulticastthreadRun implements Runnable,serverInterface{
         //TODO check if the client already exists prior to insert it in the list
         if(!ClientIpArrayList.contains(c)){//checking if the array list contains that IP address or not,if not we will add it to it
             ClientIpArrayList.add(c);
+
             return ClientIpArrayList.size();
         }else
             return -1;
     }
+
+
     //TODO The UniCast Class
     class UniCastThreadRun implements Runnable, serverInterface{//client
         Client client = null;
@@ -240,6 +267,7 @@ class MulticastthreadRun implements Runnable,serverInterface{
             }//the end of the attention loop it finishes when the client status goes to 0
 
         }//the end of the run loop
+
     }//the end of the UniCastThreadRun class
 /***************************************** The Methods ******************************************************/
     /**
@@ -309,3 +337,5 @@ class MulticastthreadRun implements Runnable,serverInterface{
         return socket;
     }
 }//end multicast
+
+

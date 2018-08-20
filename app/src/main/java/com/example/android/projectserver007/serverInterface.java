@@ -7,6 +7,6 @@ public interface serverInterface {
     String serverWantsDisconnect="555";//the Server wants to disconnect
 
 
-    int messageStateChange=1;
-    int MessageRead=2;
+     int messageStateChange=1;
+     int MessageRead=2;
 }

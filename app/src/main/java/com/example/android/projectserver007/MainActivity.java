@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
-import android.text.format.Formatter;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -19,7 +19,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.VideoView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  implements serverInterface{
     static TextView textViewNumberOfClients;
     ImageView imageView;
     LinearLayout linearLayoutPrimary;
@@ -55,13 +55,22 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
+        //unlock the multicast messaging /* Turn off multicast filter */
+        WifiManager wifi = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifi != null){
+            WifiManager.MulticastLock lock = wifi.createMulticastLock("mylock");
+            lock.acquire();
+            lock.release();
+        }
+
+
     }
 
     public void toggleButtonConnectToClientsFunction(View view) {
         boolean checked = ((ToggleButton) view).isChecked();
         if (checked) {
             //check the client array number
-            textViewNumberOfClients.setText(multicastthreadRun.ClientIpArrayList.size() +" Client/s Connected");
+            //textViewNumberOfClients.setText(" Client/s Connected");
             textViewNumberOfClients.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.GONE);
             linearLayoutSecondaryTexts.setVisibility(View.VISIBLE);
@@ -70,19 +79,33 @@ public class MainActivity extends AppCompatActivity {
             startService(i);
 
 
-            //new connectClients().execute();
+            PassMessageToMainActivity passMessageToMainActivity=new PassMessageToMainActivity(mHandler);
+            passMessageToMainActivity.start();
 
-            //Multithread here
-            //multicastthreadRun.run();
 
-                //soundstates here
-                //linearLayoutSecondaryTexts.addView(new TextView(this));
-            /*  /Thread t = new Thread(new Runnable() {
+
+            runOnUiThread(new Runnable() {
+                int counterClients=0;
+                @Override
+                public void run() {
+                    //in this case we can change the user interface
+                    counterClients=BroadCastServer.ClientIpArrayList.size();
+                    textViewNumberOfClients.setText(counterClients+ " Client/s Connected");
+                }
+            });
+
+
+
+            /*TextView textView=new TextView(MainActivity.this);
+            linearLayoutSecondaryTexts.addView(textView);
+            textView.setText("hello");
+
+                /*
+                Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
-
                         //Multithread here
-                        multicastthreadRun.run();
+                        //multicastthreadRun.run();
                         for(int counter=0;counter<multicastthreadRun.ClientIpArrayList.size();counter++) {
                         runOnUiThread(new Runnable() {
                             @Override
@@ -107,22 +130,28 @@ public class MainActivity extends AppCompatActivity {
             linearLayoutSecondaryTexts.setVisibility(View.GONE);
         }
     }
-    public class connectClients extends AsyncTask<Void, Void, Void> {
-        @Override
-        public Void doInBackground(Void... voids) {
-            //Multithread here
-            multicastthreadRun.run();
-            return null;
-        }
-        @Override
-        public void onPreExecute(){
-            Toast.makeText(getApplicationContext(), "Starting Multicast", Toast.LENGTH_SHORT).show();
-        }
 
-        public void onPostExecute(){
-            Toast.makeText(getApplicationContext(), "After Multicast", Toast.LENGTH_SHORT).show();
+private final Handler mHandler = new Handler(){
+        public void handleMessage(Message msg){
+
+            switch (msg.what){
+                case MessageRead:
+                    String x=msg.getData().getString("data");
+                    TextView textView=new TextView(MainActivity.this);
+                    linearLayoutSecondaryTexts.addView(textView);
+                    textView.setText(x);
+                    break;
+            }
         }
-    }
+};
+
+
+
+
+
+
+
+
 
 
 
