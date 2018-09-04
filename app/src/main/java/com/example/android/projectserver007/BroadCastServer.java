@@ -24,13 +24,20 @@ import java.util.Date;
         public static final int SERVICE_UNICAST_PORT = 9000;
         public static final int SERVICE_BROADCAST_PORT = 9999;// receiving port
 
+
+
+
+
+
         static public ArrayList<Client> ClientIpArrayList=new ArrayList<Client>();//Array List For Saving The IPs of the Clients
 
         static int serverstate;//flag
         static String oldstate="SD2";
 
+
         DatagramSocket datagramSocketBroadcast;
         DatagramSocket datagramSocketUnicast;
+        static String soundStateMessage;
 
         @Override
         public void run() {
@@ -98,7 +105,7 @@ import java.util.Date;
         //TODO The UniCast Class
         class UniCastThreadRun implements Runnable, serverInterface{//client
             Client client = null;
-            PassMessageToMainActivity passMessageToMainActivity=new PassMessageToMainActivity();
+
 
             UniCastThreadRun(Client c){
                 client=c;
@@ -108,16 +115,19 @@ import java.util.Date;
             DateFormat dateformat = new SimpleDateFormat("dd/MM/yy HH:mm a");//To Set the Format of the Date
             Date currentdate = new Date();//To Get the Current Date
 
+            //handler message preperation
 
 
             @Override
             public void run() {
+                /*
                 //creating a log file for the receiver side
                 File file=new File(Environment.getExternalStorageDirectory() +"logserver.txt");
                 if(!file.exists()){
                     file.mkdirs();
-                }
 
+                }
+                */
                 System.out.println(client.getStatus());
                 String state=client.getStatus();
                 System.out.println(state.length());
@@ -136,22 +146,19 @@ import java.util.Date;
 
                     if(soundStateMessageRecieved.equals("SD0")){
                         soundState="Speech";//Speech=SD0
-                        passMessageToMainActivity.soundStateAndIP=soundState;
-                        passMessageToMainActivity.start();
 
-                        System.out.println(soundState);
+
+
                     }else if(soundStateMessageRecieved.equals("SD1")){
                         soundState="Alarm";//Alarm=SD1
-                        passMessageToMainActivity.soundStateAndIP=soundState;
-                        passMessageToMainActivity.start();
 
-                        System.out.println(soundState);
+
+
                     }else if(soundStateMessageRecieved.equals("SD2")){
                         soundState="Silence";//Silence==SD2
-                        passMessageToMainActivity.soundStateAndIP=soundState;
-                        passMessageToMainActivity.start();
 
-                        System.out.println(soundState);
+
+
                     }else if(soundStateMessageRecieved.equals("DQR")){
                         //Receiving "DQR" from the client means that he will disconnect
                         //close and disconnect the datagramSocketForUniCast
@@ -170,9 +177,16 @@ import java.util.Date;
 
                     //String Contains the received sound state,the date, time of receiving it and the IP of the client
                     String currentState=dateformat.format(currentdate)+" "+clientIP+" "+soundState;
+                    //creating an string to pass the ip with the sound state to them main activity
+                    System.out.println(clientIP.toString()+ ":"+soundState);
+                    soundStateMessage=clientIP.toString()+ ":"+soundState;
+                    //bundle.putString("data",soundStateMessage);
+                    //mHandler.sendMessage(msg);
+
 
                     if(!oldstate.equals(soundStateMessageRecieved)){
                         oldstate=soundStateMessageRecieved;
+                        /*
                         //Write the received state in The Log File Of The Server
                         try {
                             FileWriter fileWriterSoundStates=new FileWriter(file,true);
@@ -182,7 +196,7 @@ import java.util.Date;
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
+                        */
 
 
                     }
@@ -224,7 +238,7 @@ import java.util.Date;
             try {
                 datagramSocketrecieving.receive(datagrampacket);
                 BroadCastServer.setclientPort(datagrampacket.getPort());
-                System.out.println("IP "+datagrampacket.getAddress().toString()+" PORT:"+datagrampacket.getPort());
+                System.out.println("IP: "+datagrampacket.getAddress().toString()+" PORT:"+datagrampacket.getPort());
             } catch (SocketException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -256,23 +270,3 @@ import java.util.Date;
         }
 }//end broadcast
 
-
-class PassMessageToMainActivity extends Thread implements serverInterface{
-        private Handler myHandler;
-        PassMessageToMainActivity(Handler myHandler) {
-            this.myHandler = myHandler;
-        }
-    static Bundle bundle=new Bundle();
-    static String soundStateAndIP;
-
-    public PassMessageToMainActivity() {
-
-    }
-    @Override
-    public void run() {
-        Message msg=myHandler.obtainMessage(MessageRead);
-        bundle.putString("data","i"+soundStateAndIP);
-        msg.setData(bundle);
-        myHandler.sendMessage(msg);
-    }
-}

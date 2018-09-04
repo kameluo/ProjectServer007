@@ -20,7 +20,7 @@ import android.widget.ToggleButton;
 import android.widget.VideoView;
 
 public class MainActivity extends AppCompatActivity  implements serverInterface{
-    static TextView textViewNumberOfClients;
+    static TextView textViewSoundState;
     ImageView imageView;
     LinearLayout linearLayoutPrimary;
     LinearLayout linearLayoutSecondaryTexts;
@@ -30,15 +30,15 @@ public class MainActivity extends AppCompatActivity  implements serverInterface{
 
     Dialog dialog;
     Button buttonAbout;
-    MulticastthreadRun multicastthreadRun=new MulticastthreadRun();
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        textViewNumberOfClients = (TextView) findViewById(R.id.NumberOfClients);
-        textViewNumberOfClients.setVisibility(View.GONE);
+        textViewSoundState = (TextView) findViewById(R.id.NumberOfClients);
+        textViewSoundState.setVisibility(View.VISIBLE);
         imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setVisibility(View.VISIBLE);
         linearLayoutPrimary = (LinearLayout) findViewById(R.id.linearLayoutPrimary);
@@ -64,116 +64,64 @@ public class MainActivity extends AppCompatActivity  implements serverInterface{
         }
 
 
+
+
     }
+
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case serverInterface.MessageRead:
+                    String x = msg.getData().getString("date");
+                    textViewSoundState.setText(x);
+                    break;
+            }
+        }
+    };
 
     public void toggleButtonConnectToClientsFunction(View view) {
         boolean checked = ((ToggleButton) view).isChecked();
         if (checked) {
-            //check the client array number
-            //textViewNumberOfClients.setText(" Client/s Connected");
-            textViewNumberOfClients.setVisibility(View.VISIBLE);
+            textViewSoundState.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.GONE);
             linearLayoutSecondaryTexts.setVisibility(View.VISIBLE);
 
             Intent i=new Intent(this,ClientConnectService.class);
             startService(i);
 
-
-            PassMessageToMainActivity passMessageToMainActivity=new PassMessageToMainActivity(mHandler);
-            passMessageToMainActivity.start();
-
-
-
             runOnUiThread(new Runnable() {
-                int counterClients=0;
                 @Override
                 public void run() {
                     //in this case we can change the user interface
-                    counterClients=BroadCastServer.ClientIpArrayList.size();
-                    textViewNumberOfClients.setText(counterClients+ " Client/s Connected");
+                    //textViewSoundState.setText();
                 }
             });
 
 
-
-            /*TextView textView=new TextView(MainActivity.this);
-            linearLayoutSecondaryTexts.addView(textView);
-            textView.setText("hello");
-
-                /*
-                Thread t = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //Multithread here
-                        //multicastthreadRun.run();
-                        for(int counter=0;counter<multicastthreadRun.ClientIpArrayList.size();counter++) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                //in this case we can change the user interface
-                                TextView textView=new TextView(MainActivity.this);
-                                linearLayoutSecondaryTexts.addView(textView);
-                                textView.setText("hello");
-                            }
-                        });
-                        }//end of the for loop
-                    }
-                });t.start();
-                */
             toggleButtonCamera.setVisibility(View.VISIBLE);
         } else {
-
             Toast.makeText(getApplicationContext(), "No Clients Connected", Toast.LENGTH_SHORT).show();
-            textViewNumberOfClients.setVisibility(View.GONE);
+            textViewSoundState.setVisibility(View.GONE);
             imageView.setVisibility(View.VISIBLE);
-            //toggleButtonCamera.setVisibility(View.v);
             linearLayoutSecondaryTexts.setVisibility(View.GONE);
         }
     }
 
-private final Handler mHandler = new Handler(){
-        public void handleMessage(Message msg){
-
-            switch (msg.what){
-                case MessageRead:
-                    String x=msg.getData().getString("data");
-                    TextView textView=new TextView(MainActivity.this);
-                    linearLayoutSecondaryTexts.addView(textView);
-                    textView.setText(x);
-                    break;
-            }
-        }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
     public void toggleButtonConnectCamerasFunction(View view) {
         boolean checked = ((ToggleButton) view).isChecked();
         VideoView videoView = new VideoView(this, null);
-        //should we put a thread for starting and stoping many cameras ??? --->>>> Ask juan carlos
-        int numberOfClients = multicastthreadRun.ClientIpArrayList.size();
 
         if (checked) {
-            toggleButtonClients.setEnabled(false);
-            for (int counter = 0; counter < numberOfClients; counter++) {
-                String clientIp = multicastthreadRun.ClientIpArrayList.get(counter).getClientIP();
+                toggleButtonClients.setEnabled(false);
+
+                String clientIp ="ggg";// textViewSoundState.ClientIpArrayList.getClientIP();
                 String stringIP = "rtsp://"+clientIp+":8080/h264_pcm.sdp";//camera stream
                 //connect the cameras
                 linearLayoutSecondaryVideoView.setVisibility(View.VISIBLE);
                 Uri uri = Uri.parse(stringIP);
                 videoView.setVideoURI(uri);
                 videoView.start();
-            }
         } else {
             videoView.suspend();
             linearLayoutSecondaryVideoView.setVisibility(View.GONE);
