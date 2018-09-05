@@ -39,12 +39,16 @@
                 android:textOn="@string/disconnectToCameras" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/NumberOfClients"
+        <ListView
+            android:id="@+id/ListView"
             android:layout_width="match_parent"
-            android:layout_height="75dp"
-            android:text="@string/numberOfClients" />
+            android:layout_height="80dp"/>
 
+        <VideoView
+            android:id="@+id/videoView"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_weight="1" />
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
@@ -52,18 +56,12 @@
             android:contentDescription="@null"
             app:srcCompat="@drawable/logo" />
 
-
-        <LinearLayout
-            android:id="@+id/linearLayoutSecondaryTexts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"></LinearLayout>
-
         <LinearLayout
             android:id="@+id/linearLayoutSecondaryVideoViews"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
         </LinearLayout>
 
         <Button
@@ -71,7 +69,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="bottom"
-            android:text="@string/about"
-            android:onClick="about"/>
+            android:onClick="about"
+            android:text="@string/about" />
     </LinearLayout>
 </ScrollView>
