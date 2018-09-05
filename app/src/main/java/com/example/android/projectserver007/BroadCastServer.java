@@ -1,26 +1,15 @@
 package com.example.android.projectserver007;
 
+import android.annotation.TargetApi;
 import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
-import android.content.Intent;
+import android.content.ContextWrapper;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.provider.SyncStateContract;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
-import android.view.View;
+import android.support.annotation.RequiresApi;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -32,13 +21,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 
-    public class BroadCastServer extends Application implements Runnable,serverInterface {
+public class BroadCastServer extends ContextWrapper implements Runnable,serverInterface {
         public static final int SERVICE_UNICAST_PORT = 9000;
         public static final int SERVICE_BROADCAST_PORT = 9999;// receiving port
 
 
-        private NotificationManager mNM;
 
         static public ArrayList<String> ClientsSoundState =new ArrayList<String>();
         static public ArrayList<Client> ClientIpArrayList = new ArrayList<Client>();//Array List For Saving The IPs of the Clients
@@ -130,6 +119,8 @@ import java.util.Date;
             //handler message preperation
 
 
+            @TargetApi(Build.VERSION_CODES.O)
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void run() {
                 /*
@@ -144,6 +135,8 @@ import java.util.Date;
                 String state=client.getStatus();
                 System.out.println(state.length());
                 System.out.println(state.equals("1"));
+
+
 
 
 
@@ -164,6 +157,8 @@ import java.util.Date;
                     }else if(soundStateMessageRecieved.equals("SD1")){
                         soundState="Alarm";//Alarm=SD1
 
+                        //Notification.Builder builder=BroadCastServer.getChannelNotification("Project Notification",soundState+"-"+getCurrentTimeStapwithTimeOnly());
+                        //BroadCastServer.getManager().notify(new Random().nextInt(),builder.build());
 
 
                     }else if(soundStateMessageRecieved.equals("SD2")){
@@ -193,9 +188,9 @@ import java.util.Date;
                     System.out.println(clientIP.toString()+ ":"+soundState);
                     soundStateMessage=clientIP.toString()+ ":"+soundState;
 
-                    ClientsSoundState.add(soundStateMessage);
+                    ClientsSoundState.add(soundStateMessage +"-"+ getCurrentTimeStapwithTimeOnly());
 
-                    notificationCall(soundStateMessage);
+                    ////////////////////////////////////////////////////////////////////////////////notificationCall(soundStateMessage);
 
                     //bundle.putString("data",soundStateMessage);
                     //mHandler.sendMessage(msg);
@@ -286,48 +281,50 @@ import java.util.Date;
             return clientPort;
         }
 
-        public void notificationCall(String soundState){
-            NotificationCompat.Builder notificationBuilder=(NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                    .setDefaults(NotificationCompat.DEFAULT_ALL)
-                    .setSmallIcon(R.drawable.logo)
-                    .setContentTitle("notification")
-                    .setContentText(soundState)
+
+
+        /////notification part
+        private static final String CHANNEL_ID="channel1";
+        private static final String CHANNEL_NAME="Notification";
+        private static NotificationManager manager;
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        public BroadCastServer(Context base) {
+            super(base);
+            createChannel();
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        private void createChannel() {
+            NotificationChannel notificationChannel=new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,NotificationManager.IMPORTANCE_LOW);
+            notificationChannel.enableLights(true);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+
+            getManager().createNotificationChannel(notificationChannel);
+        }
+
+        public NotificationManager getManager() {
+            if(manager == null) {
+                manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            }
+            return manager;
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        public Notification.Builder getChannelNotification(String title, String body){
+
+            return new Notification.Builder(getApplicationContext(),CHANNEL_ID)
+                    .setContentText(body)
+                    .setContentTitle(title)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setAutoCancel(true)
                     .setWhen(System.currentTimeMillis());
-
-            //Intent intent=new Intent(this,MainActivity.class);
-            //PendingIntent pendingIntent=PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_CANCEL_CURRENT);
-            //notificationBuilder.setContentIntent(pendingIntent);
-
-            mNM=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            mNM.notify(1,notificationBuilder.build());
-            notificationBuilder.setAutoCancel(true);
-
         }
 
-
-        public static final String CHANNEL_1_ID="channel1";
-        @Override
-        public void onCreate() {
-            super.onCreate();
-            createNotificationChannels();
+        public static String getCurrentTimeStapwithTimeOnly(){
+            return new SimpleDateFormat("HH:mm a").format(new Date());
         }
-        private void createNotificationChannels(){
-            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
-                NotificationChannel channel1 = new NotificationChannel(
-                        CHANNEL_1_ID,
-                        "channel 1",
-                        NotificationManager.IMPORTANCE_HIGH
-                );
-                channel1.setDescription("this is channel 1");
-                NotificationManager manager=getSystemService(NotificationManager.class);
-                manager.createNotificationChannel(channel1);
 
-            }
-            }
-            private NotificationManagerCompat notificationManagerCompat;
-            public void sendOnChannel1(View v){
-
-            }
 }//// end broadcast
 
 

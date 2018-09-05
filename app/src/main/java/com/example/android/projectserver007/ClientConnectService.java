@@ -1,10 +1,15 @@
 package com.example.android.projectserver007;
 
+import android.annotation.TargetApi;
 import android.app.IntentService;
 import android.content.Intent;
+import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.widget.Toast;
 
+@TargetApi(Build.VERSION_CODES.O)
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class ClientConnectService extends IntentService{
 
     MulticastthreadRun multicastthreadRun=new MulticastthreadRun();
