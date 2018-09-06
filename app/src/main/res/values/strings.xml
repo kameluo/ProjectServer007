@@ -1,14 +1,14 @@
 <resources>
     <string name="app_name">SoundAlarm</string>
 
-    <string name="connectToClients">Connect to Clients</string>
-    <string name="disconnectToClients">Disconnect to Clients</string>
+    <string name="connectToClients">Start service</string>
+    <string name="disconnectToClients">Stop service</string>
 
     <string name="connectToCameras">Connect to Cameras</string>
     <string name="disconnectToCameras">Disconnect to Cameras</string>
 
     <string name="numberOfClients">Client/s are Connected</string>
-    <string name="about">about...</string>
+    <string name="about">About...</string>
 
     <string name="NOTIFICATION_CHANNEL_NAME">about...</string>
     <string name="NOTIFICATION_CHANNEL_DESCRIPTION">about...</string>
