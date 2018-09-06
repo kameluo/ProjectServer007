@@ -8,6 +8,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Build;
+import android.os.HandlerThread;
 import android.support.annotation.RequiresApi;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
-public class BroadCastServer extends ContextWrapper implements Runnable,serverInterface {
+public class BroadCastServer implements Runnable,serverInterface {
         public static final int SERVICE_UNICAST_PORT = 9000;
         public static final int SERVICE_BROADCAST_PORT = 9999;// receiving port
 
@@ -39,6 +40,8 @@ public class BroadCastServer extends ContextWrapper implements Runnable,serverIn
         DatagramSocket datagramSocketBroadcast;
         DatagramSocket datagramSocketUnicast;
         static String soundStateMessage;
+
+
 
         @Override
         public void run() {
@@ -119,8 +122,6 @@ public class BroadCastServer extends ContextWrapper implements Runnable,serverIn
             //handler message preperation
 
 
-            @TargetApi(Build.VERSION_CODES.O)
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void run() {
                 /*
@@ -282,48 +283,10 @@ public class BroadCastServer extends ContextWrapper implements Runnable,serverIn
         }
 
 
+    public static String getCurrentTimeStapwithTimeOnly(){
+        return new SimpleDateFormat("HH:mm a").format(new Date());
+    }
 
-        /////notification part
-        private static final String CHANNEL_ID="channel1";
-        private static final String CHANNEL_NAME="Notification";
-        private static NotificationManager manager;
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        public BroadCastServer(Context base) {
-            super(base);
-            createChannel();
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        private void createChannel() {
-            NotificationChannel notificationChannel=new NotificationChannel(CHANNEL_ID,CHANNEL_NAME,NotificationManager.IMPORTANCE_LOW);
-            notificationChannel.enableLights(true);
-            notificationChannel.enableVibration(true);
-            notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-
-            getManager().createNotificationChannel(notificationChannel);
-        }
-
-        public NotificationManager getManager() {
-            if(manager == null) {
-                manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            }
-            return manager;
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        public Notification.Builder getChannelNotification(String title, String body){
-
-            return new Notification.Builder(getApplicationContext(),CHANNEL_ID)
-                    .setContentText(body)
-                    .setContentTitle(title)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setAutoCancel(true)
-                    .setWhen(System.currentTimeMillis());
-        }
-
-        public static String getCurrentTimeStapwithTimeOnly(){
-            return new SimpleDateFormat("HH:mm a").format(new Date());
-        }
 
 }//// end broadcast
 

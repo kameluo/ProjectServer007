@@ -7,6 +7,10 @@ public interface serverInterface {
     String serverWantsDisconnect="555";//the Server wants to disconnect
 
 
-     int messageStateChange=1;
-     int MessageRead=2;
+    //Server events
+    public static final int Server_CRQ=0;
+    public static final int messageStateChange = 1;
+
+    public static final int Server_MessageRead=2;
+    public static final int Server_starting=3;
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ProjectServer007</string>
+    <string name="app_name">SoundAlarm</string>
 
     <string name="connectToClients">Connect to Clients</string>
     <string name="disconnectToClients">Disconnect to Clients</string>
@@ -9,4 +9,11 @@
 
     <string name="numberOfClients">Client/s are Connected</string>
     <string name="about">about...</string>
+
+    <string name="NOTIFICATION_CHANNEL_NAME">about...</string>
+    <string name="NOTIFICATION_CHANNEL_DESCRIPTION">about...</string>
+
+    <string name="SERVER_STARTING">Server starting...</string>
+    <string name="SERVER_CRQ">CRQ Received</string>
+    <string name="SERVER_EVENT_MESSAGE">Event message received</string>
 </resources>
