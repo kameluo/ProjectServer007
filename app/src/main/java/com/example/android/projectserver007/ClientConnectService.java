@@ -6,6 +6,7 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -35,8 +37,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-@TargetApi(Build.VERSION_CODES.O)
-@RequiresApi(api = Build.VERSION_CODES.O)
 public class ClientConnectService extends Service {
 
     MulticastthreadRun multicastthreadRun = new MulticastthreadRun();
@@ -45,7 +45,9 @@ public class ClientConnectService extends Service {
 
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
-    public static final String MSG_DATA="msgdata";
+    public static final String MSG_DATA = "msgdata";
+
+    private Handler mMainHandler = null;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -57,17 +59,26 @@ public class ClientConnectService extends Service {
         public void handleMessage(Message msg) {
             // Normally we would do some work here, like download a file.
             // For our sample, we just sleep for 5 seconds.
-             Bundle data= msg.getData();
+            Bundle data = msg.getData();
             switch (msg.what) {
                 case serverInterface.Server_starting:
-                    Toast.makeText(getApplicationContext(), getString(R.string.SERVER_STARTING)+data.getString(MSG_DATA), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.SERVER_STARTING) + data.getString(MSG_DATA), Toast.LENGTH_LONG).show();
                     break;
                 case serverInterface.Server_MessageRead:
-                    Toast.makeText(getApplicationContext(), getString(R.string.SERVER_EVENT_MESSAGE)+data.getString(MSG_DATA), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.SERVER_EVENT_MESSAGE) + data.getString(MSG_DATA), Toast.LENGTH_LONG).show();
                     break;
                 case serverInterface.Server_CRQ:
-                    Toast.makeText(getApplicationContext(), getString(R.string.SERVER_CRQ)+data.getString(MSG_DATA), Toast.LENGTH_LONG).show();
+                    String msgCRQ = getString(R.string.SERVER_CRQ) + data.getString(MSG_DATA);
+                    Toast.makeText(getApplicationContext(), msgCRQ, Toast.LENGTH_LONG).show();
+                    mMainHandler = new Handler(Looper.getMainLooper());
+                    if (mMainHandler != null) {
+                        mMainHandler.post(new MainActivity.AddClient(getApplicationContext(),msgCRQ));
+                    } else
+                        postNotification(getString(R.string.SERVER_CRQ), msgCRQ);
+
                     break;
+                default:
+                    super.handleMessage(msg);
             }
         }
     }
@@ -109,16 +120,50 @@ public class ClientConnectService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(broadCastServer.isAlive())
+            broadCastServer.interrupt();
         Toast.makeText(getApplicationContext(), "Service stopped", Toast.LENGTH_SHORT).show();
     }
 
 
     public void postNotification(String title, String message) {
+
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_alert_notification)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+// notificationId is a unique int for each notification that you must define
+        notificationManager.notify(111, mBuilder.build());
+    }
+
+    public void postNotification(String title, String message, int id) {
+
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_alert_notification)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+// notificationId is a unique int for each notification that you must define
+        notificationManager.notify(id, mBuilder.build());
     }
 
     /////notification part
@@ -158,7 +203,7 @@ public class ClientConnectService extends Service {
 
         msg.what = type;
         Bundle data = new Bundle();
-        data.putString(MSG_DATA,text);
+        data.putString(MSG_DATA, text);
         msg.setData(data);
         mServiceHandler.sendMessage(msg);
     }
@@ -191,13 +236,13 @@ public class ClientConnectService extends Service {
             try {
                 datagramSocketUnicast = new DatagramSocket(SERVICE_UNICAST_PORT);
                 datagramSocketBroadcast = new DatagramSocket(SERVICE_BROADCAST_PORT);
-                sendMessage(serverInterface.Server_starting,"OK");
+                sendMessage(serverInterface.Server_starting, "OK");
             } catch (SocketException e) {
                 e.printStackTrace();
             }
 
 
-            while (true) {
+            while (!isInterrupted() && !isRestricted()) {
                 try {
                     //Receiving the "CRQ" message from the Client by a Multicast datagram object
                     byte[] byteBroadCast = new byte[3];
@@ -208,12 +253,12 @@ public class ClientConnectService extends Service {
 
                     InetAddress clientIP = datagramPacketBroadCast.getAddress();
                     int clientPort = datagramPacketBroadCast.getPort();
-                    //System.out.println(clientIP + "<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                    //System.out.println(clientPort + "___________________________");
+                    Log.d("UDPServer> msg from", clientIP.toString() + ":" + clientPort);
+
                     setclientIP(clientIP);//Getting the IP of the the received message
                     setclientPort(clientPort);//Getting the Port of the the received message
 
-                    sendMessage(serverInterface.Server_CRQ,"IP="+clientIP.toString()+":"+clientPort);
+                    sendMessage(serverInterface.Server_CRQ, "IP=" + clientIP.toString() + ":" + clientPort);
 
                     String clientIPString = clientIP.getHostAddress();//converting the IP from Bytes format to String format to access the client IPs Array list
                     String clientPortString = String.valueOf(clientPort);//converting the Port from integer format to String format to access the client IPs Array list
@@ -232,8 +277,8 @@ public class ClientConnectService extends Service {
                             System.out.println("hello from if condition------------------");
                             clnt.setStatus("1");//the server is ready to receive
                             //thread to start the unicast sending and receiving messages
-                            Thread uniCastThread = new Thread(new UniCastThreadRun(clnt));
-                            uniCastThread.start();
+                        //    Thread uniCastThread = new Thread(new UniCastThreadRun(clnt));
+                            //   uniCastThread.start();
                         }
                     }
                 } catch (UnknownHostException e) {
@@ -242,6 +287,8 @@ public class ClientConnectService extends Service {
                     e.printStackTrace();
                 }
             }//the end of the infinite while ,to be able to wait for many clients
+            datagramSocketUnicast.close();
+            datagramSocketBroadcast.close();
         }
 
         private int addClient(Client c) {
@@ -288,7 +335,7 @@ public class ClientConnectService extends Service {
                 System.out.println(state.equals("1"));
 
 
-                while (state.equals("1")) {
+                while (state.equals("1") && !isInterrupted()) {
                     //Receiving the Sound States
                     String soundStateMessageRecieved = recievemessage(datagramSocketUnicast);
                     System.out.println(datagramSocketUnicast.getPort() + " " + soundStateMessageRecieved);
